@@ -14,6 +14,7 @@ import reactor.netty.http.client.HttpClient;
 @Component
 public class BackgroundCheckClient {
     private final WebClient webClient;
+    private long cooldownUntilMillis;
 
     public BackgroundCheckClient(BackgroundCheckProperties properties, WebClient.Builder builder) {
         var httpClient = HttpClient.create()
@@ -37,7 +38,12 @@ public class BackgroundCheckClient {
         return execute(webClient.get().uri("/background-checks/{checkId}", checkId), Result.class);
     }
 
-    private <T> T execute(WebClient.RequestHeadersSpec<?> request, Class<T> type) {
+    private synchronized <T> T execute(WebClient.RequestHeadersSpec<?> request, Class<T> type) {
+        var remainingMillis = cooldownUntilMillis - System.currentTimeMillis();
+        if (remainingMillis > 0) {
+            var retryAfter = (int) Math.max(1, (remainingMillis + 999) / 1000);
+            throw unavailable(retryAfter);
+        }
         try {
             return request.exchangeToMono(response -> {
                         if (response.statusCode().is2xxSuccessful()) return response.bodyToMono(type);
@@ -66,11 +72,19 @@ public class BackgroundCheckClient {
                     safe(error.message(), "Background Check 요청이 올바르지 않습니다."));
             case 404 -> new AppException(HttpStatus.NOT_FOUND, "BACKGROUND_CHECK_NOT_FOUND",
                     "Background Check 결과를 찾을 수 없습니다.");
-            case 503 -> new AppException(HttpStatus.SERVICE_UNAVAILABLE, "BACKGROUND_CHECK_UNAVAILABLE",
-                    "Background Check 서비스가 일시적으로 사용할 수 없습니다.", error.retryAfter());
+            case 503 -> {
+                var retryAfter = error.retryAfter() != null && error.retryAfter() > 0 ? error.retryAfter() : 3;
+                cooldownUntilMillis = System.currentTimeMillis() + retryAfter * 1000L;
+                yield unavailable(retryAfter);
+            }
             default -> new AppException(HttpStatus.BAD_GATEWAY, "BACKGROUND_CHECK_ERROR",
                     "Background Check 서비스에서 오류가 발생했습니다.");
         };
+    }
+
+    private static AppException unavailable(int retryAfter) {
+        return new AppException(HttpStatus.SERVICE_UNAVAILABLE, "BACKGROUND_CHECK_UNAVAILABLE",
+                "Background Check 서비스가 일시적으로 사용할 수 없습니다.", retryAfter);
     }
 
     private static String safe(String value, String fallback) {

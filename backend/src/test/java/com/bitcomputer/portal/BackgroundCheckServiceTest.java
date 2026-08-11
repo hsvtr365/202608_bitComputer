@@ -30,11 +30,10 @@ class BackgroundCheckServiceTest {
 
         var service = new BackgroundCheckService(employees, mock(KoreanNameMapper.class), client);
 
-        var page = service.history(1L, 0, 2);
+        var result = service.history(1L);
 
-        assertThat(page.checks()).extracting(HistoryItem::checkId).containsExactly("new", "old");
-        assertThat(page.totalCount()).isEqualTo(3);
-        assertThat(page.totalPages()).isEqualTo(2);
+        assertThat(result.checks()).extracting(HistoryItem::checkId).containsExactly("new", "old", "pending");
+        assertThat(result.totalCount()).isEqualTo(3);
     }
 
     private static HistoryItem item(String id, String createdAt, String completedAt) {

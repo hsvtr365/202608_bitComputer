@@ -24,8 +24,6 @@ public final class BackgroundCheckDtos {
 
     public record HistoryItem(String checkId, String status, Instant createdAt, Instant completedAt) {}
     public record History(String employeeId, List<HistoryItem> checks, int totalCount) {}
-    public record HistoryPage(String employeeId, List<HistoryItem> checks, int totalCount,
-                              int page, int size, int totalPages) {}
     public record ExternalError(String error, String message, Integer retryAfter, Integer statusCode) {}
     public record NameParts(String firstName, String lastName) {}
 }

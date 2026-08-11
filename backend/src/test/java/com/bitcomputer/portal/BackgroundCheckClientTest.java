@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 class BackgroundCheckClientTest {
     private HttpServer server;
+    private final AtomicInteger requests = new AtomicInteger();
 
     @BeforeEach
     void start() throws Exception {
+        requests.set(0);
         server = HttpServer.create(new InetSocketAddress(0), 0);
         server.start();
     }
@@ -46,11 +49,15 @@ class BackgroundCheckClientTest {
         respond(503, """
                 {"error":"Service Unavailable","message":"busy","retryAfter":30,"statusCode":503}
                 """);
-        assertThatThrownBy(() -> client().history("EMP-001"))
+        var client = client();
+        assertThatThrownBy(() -> client.history("EMP-001"))
                 .isInstanceOfSatisfying(AppException.class, e -> {
                     assertThat(e.code()).isEqualTo("BACKGROUND_CHECK_UNAVAILABLE");
                     assertThat(e.retryAfter()).isEqualTo(30);
                 });
+        assertThatThrownBy(() -> client.history("EMP-001"))
+                .isInstanceOfSatisfying(AppException.class, e -> assertThat(e.retryAfter()).isPositive());
+        assertThat(requests).hasValue(1);
     }
 
     private BackgroundCheckClient client() {
@@ -61,6 +68,7 @@ class BackgroundCheckClientTest {
 
     private void respond(int status, String body) {
         server.createContext("/background-checks", exchange -> {
+            requests.incrementAndGet();
             var bytes = body.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(status, bytes.length);
