@@ -13,7 +13,7 @@ command -v pm2 >/dev/null || { echo 'pm2 missing'; exit 1; }
 git pull --ff-only
 
 set -a
-. ./.env
+. <(sed 's/\r$//' .env)
 set +a
 
 export VITE_BASE_PATH="${VITE_BASE_PATH:-/bitComProject/}"
