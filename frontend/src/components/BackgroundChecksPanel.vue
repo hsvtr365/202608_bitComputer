@@ -49,7 +49,7 @@ async function load() {
   await refreshHistory()
 }
 
-async function refreshHistory(page = historyPage.value, attempt = 0, notify = false) {
+async function refreshHistory(page = historyPage.value, attempt = 0, notify = false, retryOnUnavailable = true) {
   if (historyTimer) window.clearTimeout(historyTimer)
   if (notify) refreshing.value = true
   else paging.value = true
@@ -72,10 +72,10 @@ async function refreshHistory(page = historyPage.value, attempt = 0, notify = fa
   } catch (e) {
     const status = axios.isAxiosError(e) ? e.response?.status : 0
     const retryAfter = axios.isAxiosError(e) ? Number(e.response?.data?.retryAfter || 0) : 0
-    if ((status === 502 || status === 503) && attempt < 3) {
+    if (retryOnUnavailable && (status === 502 || status === 503) && attempt < 3) {
       const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
       showNotice(`History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/3)`, 'warning')
-      historyTimer = window.setTimeout(() => refreshHistory(page, attempt + 1, notify), delay * 1000)
+      historyTimer = window.setTimeout(() => refreshHistory(page, attempt + 1, notify, retryOnUnavailable), delay * 1000)
     } else {
       if (notice.value.startsWith('History')) notice.value = ''
       showError(e, 'history')
@@ -169,9 +169,9 @@ onUnmounted(() => {
       <div class="mb-3 flex items-center justify-between gap-3">
         <h4 class="font-bold">History ({{ totalCount }})</h4>
         <div class="flex items-center gap-2 text-sm">
-          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage === 0" @click="refreshHistory(historyPage - 1)">이전</button>
+          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage === 0" @click="refreshHistory(historyPage - 1, 0, false, false)">이전</button>
           <span>{{ historyPage + 1 }} / {{ totalPages }}</span>
-          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage + 1 >= totalPages" @click="refreshHistory(historyPage + 1)">다음</button>
+          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage + 1 >= totalPages" @click="refreshHistory(historyPage + 1, 0, false, false)">다음</button>
         </div>
       </div>
       <table class="data-table w-full min-w-[620px] text-left text-sm">
