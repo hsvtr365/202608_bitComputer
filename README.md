@@ -100,7 +100,30 @@ npm run build
 
 ## OCI 배포 구조
 
-아직 배포하지 않았다. 배포 시 Nginx에서 Vue를 `/bitComProject/`, Spring Boot API를 `/bitComProject/api/`로 연결한다. 예시는 `infra/nginx/bitcomputer.conf`에 있다.
+OCI 서버 `/home/ubuntu/app/202608_bitComputer`에 배포한다.
+
+- 웹: `https://www.jujeop.com/bitComProject/`
+- API: `https://www.jujeop.com/bitComProject/api/`
+- 프런트 정적 파일: `/var/www/bitcomputer/bitComProject`
+- 백엔드 PM2 프로세스: `bitcomputer-api` (포트 8081)
+
+서버의 프로젝트 루트에 Git에 포함되지 않는 `.env`를 만들고 권한을 제한한다.
+
+```sh
+cd /home/ubuntu/app/202608_bitComputer
+chmod 600 .env
+./deploy.sh
+```
+
+`deploy.sh`는 `git pull --ff-only`, 프런트 빌드/정적 파일 배포, Spring Boot JAR 빌드, PM2 재시작, API 헬스체크와 `pm2 save`를 실행한다. Windows CRLF 형식의 `.env`도 처리한다.
+
+Nginx는 `infra/nginx/bitcomputer.conf`의 location 블록을 `jujeop.com` HTTPS 서버 블록에 포함해야 한다. 배포 후 확인 명령은 다음과 같다.
+
+```sh
+pm2 status bitcomputer-api
+curl -fsS http://127.0.0.1:8081/api/auth/csrf
+curl -I https://www.jujeop.com/bitComProject/
+```
 
 ## AI 활용
 
