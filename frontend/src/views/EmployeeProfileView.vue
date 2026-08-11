@@ -56,7 +56,7 @@ async function save() {
       <form class="mt-8 border-t border-slate-200 pt-6" @submit.prevent="save">
         <label class="block max-w-sm">
           <span class="label">전화번호</span>
-          <input v-model="phone" class="field" maxlength="30" />
+          <input v-model="phone" class="field" maxlength="30" pattern="[0-9+() -]*" title="전화번호 형식을 확인하세요." />
         </label>
         <p class="mt-2 text-xs text-slate-500">직원이 직접 수정할 수 있는 항목입니다.</p>
         <button class="btn-primary mt-4" :disabled="saving">{{ saving ? '저장 중...' : '저장' }}</button>

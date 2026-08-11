@@ -4,6 +4,7 @@ import com.bitcomputer.portal.dto.EmployeeDtos.*;
 import com.bitcomputer.portal.security.EmployeePrincipal;
 import com.bitcomputer.portal.service.EmployeeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,7 +18,9 @@ public class AdminEmployeeController {
     public AdminEmployeeController(EmployeeService employees) { this.employees = employees; }
 
     @GetMapping
-    public List<EmployeeResponse> list(@RequestParam(required = false) String q) { return employees.list(q); }
+    public List<EmployeeResponse> list(@RequestParam(required = false) @Size(max = 100) String q) {
+        return employees.list(q);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

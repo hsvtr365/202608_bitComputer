@@ -15,6 +15,7 @@ const router = createRouter({
     { path: '/admin/employees', component: AdminEmployeesView, meta: { admin: true } },
     { path: '/admin/employees/new', component: AdminEmployeeFormView, meta: { admin: true } },
     { path: '/admin/employees/:id', component: AdminEmployeeDetailView, meta: { admin: true } },
+    { path: '/admin/employees/:id/background-checks', component: AdminEmployeeDetailView, meta: { admin: true } },
   ],
 })
 

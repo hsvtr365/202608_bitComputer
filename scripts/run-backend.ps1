@@ -16,4 +16,11 @@ if (-not $jdk) { throw '.tools에 JDK 21이 없습니다.' }
 $env:JAVA_HOME = $jdk.FullName
 
 Push-Location (Join-Path $projectRoot 'backend')
-try { & .\gradlew.bat bootRun --no-daemon } finally { Pop-Location }
+$exitCode = 0
+try {
+    & .\gradlew.bat bootRun --no-daemon
+    $exitCode = $LASTEXITCODE
+} finally {
+    Pop-Location
+}
+exit $exitCode

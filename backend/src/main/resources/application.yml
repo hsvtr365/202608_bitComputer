@@ -25,6 +25,8 @@ spring:
           time_zone: UTC
   jackson:
     default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: true
 
 springdoc:
   swagger-ui:

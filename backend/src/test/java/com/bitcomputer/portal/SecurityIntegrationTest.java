@@ -2,6 +2,7 @@ package com.bitcomputer.portal;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -59,6 +61,45 @@ class SecurityIntegrationTest {
 
         mvc.perform(get("/api/me").session((org.springframework.mock.web.MockHttpSession) session))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminAccountCannotBeTerminated() throws Exception {
+        create("ADM-001", "actor@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var target = create("ADM-002", "target@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var session = login("actor@test.com");
+
+        mvc.perform(post("/api/admin/employees/{id}/terminate", target.getId()).with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void invalidEmployeeInputIsRejected() throws Exception {
+        create("ADM-001", "actor@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var session = login("actor@test.com");
+
+        mvc.perform(post("/api/admin/employees").with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"employeeNumber":"!","name":"John","email":"invalid","password":"short",
+                                 "dateOfBirth":"2030-01-01","department":" ","position":" ",
+                                 "role":"EMPLOYEE","hireDate":"2030-01-01"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void employeeCannotChangeRoleThroughMe() throws Exception {
+        create("EMP-001", "employee@test.com", Role.EMPLOYEE, EmployeeStatus.ACTIVE);
+        var session = login("employee@test.com");
+
+        mvc.perform(patch("/api/me").with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"010-1234-5678\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     private HttpSession login(String email) throws Exception {

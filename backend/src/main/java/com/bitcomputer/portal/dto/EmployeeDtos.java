@@ -33,11 +33,11 @@ public final class EmployeeDtos {
     }
 
     public record CreateEmployeeRequest(
-            @NotBlank @Size(max = 40) String employeeNumber,
-            @NotBlank @Size(max = 100) String name,
+            @NotBlank @Size(max = 40) @Pattern(regexp = "[A-Za-z0-9_-]+") String employeeNumber,
+            @NotBlank @Size(max = 100) @Pattern(regexp = "[가-힣]{2,100}") String name,
             @NotBlank @Email @Size(max = 200) String email,
             @NotBlank @Size(min = 8, max = 72) String password,
-            @Size(max = 30) String phone,
+            @Size(max = 30) @Pattern(regexp = "[0-9+() -]*") String phone,
             @NotNull @Past LocalDate dateOfBirth,
             @NotBlank @Size(max = 100) String department,
             @NotBlank @Size(max = 100) String position,
@@ -45,14 +45,15 @@ public final class EmployeeDtos {
             @NotNull @PastOrPresent LocalDate hireDate) {}
 
     public record UpdateEmployeeRequest(
-            @Size(min = 1, max = 100) String name,
-            @Email @Size(max = 200) String email,
-            @Size(max = 30) String phone,
+            @Size(min = 2, max = 100) @Pattern(regexp = "[가-힣]{2,100}") String name,
+            @Email @Size(min = 3, max = 200) String email,
+            @Size(max = 30) @Pattern(regexp = "[0-9+() -]*") String phone,
             @Past LocalDate dateOfBirth,
-            @Size(min = 1, max = 100) String department,
-            @Size(min = 1, max = 100) String position,
+            @Size(min = 1, max = 100) @Pattern(regexp = ".*\\S.*") String department,
+            @Size(min = 1, max = 100) @Pattern(regexp = ".*\\S.*") String position,
             Role role,
             @PastOrPresent LocalDate hireDate) {}
 
-    public record UpdateMeRequest(@Size(max = 30) String phone) {}
+    public record UpdateMeRequest(
+            @Size(max = 30) @Pattern(regexp = "[0-9+() -]*") String phone) {}
 }

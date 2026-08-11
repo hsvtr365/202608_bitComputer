@@ -2,6 +2,7 @@ package com.bitcomputer.portal.service;
 
 import com.bitcomputer.portal.domain.Employee;
 import com.bitcomputer.portal.domain.EmployeeStatus;
+import com.bitcomputer.portal.domain.Role;
 import com.bitcomputer.portal.dto.EmployeeDtos.*;
 import com.bitcomputer.portal.exception.AppException;
 import com.bitcomputer.portal.repository.EmployeeRepository;
@@ -100,6 +101,10 @@ public class EmployeeService {
                     "자기 자신을 퇴사 처리할 수 없습니다.");
         }
         var employee = getEntity(id);
+        if (employee.getRole() == Role.ADMIN) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "ADMIN_TERMINATION_NOT_ALLOWED",
+                    "관리자 계정은 퇴사 처리할 수 없습니다.");
+        }
         if (employee.getStatus() == EmployeeStatus.TERMINATED) return EmployeeResponse.from(employee);
         employee.setStatus(EmployeeStatus.TERMINATED);
         employee.setTerminationDate(Instant.now());

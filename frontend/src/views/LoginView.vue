@@ -49,11 +49,11 @@ async function submit() {
       <div v-if="error" class="error mt-5" role="alert">{{ error }}</div>
       <label class="mt-6 block">
         <span class="label">이메일</span>
-        <input v-model="email" class="field" type="email" autocomplete="username" required />
+        <input v-model="email" class="field" type="email" autocomplete="username" required maxlength="200" />
       </label>
       <label class="mt-4 block">
         <span class="label">비밀번호</span>
-        <input v-model="password" class="field" type="password" autocomplete="current-password" required />
+        <input v-model="password" class="field" type="password" autocomplete="current-password" required maxlength="72" />
       </label>
       <button class="btn-primary mt-6 w-full" :disabled="loading">
         {{ loading ? '로그인 중...' : '로그인' }}

@@ -7,6 +7,9 @@ import type { Employee, Role } from '../types'
 const router = useRouter()
 const error = ref('')
 const saving = ref(false)
+const localNow = Date.now() - new Date().getTimezoneOffset() * 60000
+const today = new Date(localNow).toISOString().slice(0, 10)
+const yesterday = new Date(localNow - 86400000).toISOString().slice(0, 10)
 const form = reactive({
   employeeNumber: '', name: '', email: '', password: '', phone: '', dateOfBirth: '',
   department: '', position: '', role: 'EMPLOYEE' as Role, hireDate: new Date().toISOString().slice(0, 10),
@@ -32,16 +35,16 @@ async function submit() {
     <div class="mb-6"><p class="eyebrow">Admin</p><h2 class="text-3xl font-bold">신규 직원 생성</h2></div>
     <div v-if="error" class="error mb-4">{{ error }}</div>
     <form class="card grid gap-5 sm:grid-cols-2" @submit.prevent="submit">
-      <label><span class="label">사번</span><input v-model="form.employeeNumber" class="field" required maxlength="40" /></label>
-      <label><span class="label">한글 이름</span><input v-model="form.name" class="field" required maxlength="100" /></label>
-      <label><span class="label">이메일</span><input v-model="form.email" class="field" type="email" required /></label>
+      <label><span class="label">사번</span><input v-model="form.employeeNumber" class="field" required maxlength="40" pattern="[A-Za-z0-9_-]+" title="영문, 숫자, -, _만 사용할 수 있습니다." /></label>
+      <label><span class="label">한글 이름</span><input v-model="form.name" class="field" required minlength="2" maxlength="100" pattern="[가-힣]{2,100}" title="한글 이름을 입력하세요." /></label>
+      <label><span class="label">이메일</span><input v-model="form.email" class="field" type="email" required maxlength="200" /></label>
       <label><span class="label">초기 비밀번호</span><input v-model="form.password" class="field" type="password" minlength="8" maxlength="72" required autocomplete="new-password" /></label>
-      <label><span class="label">전화번호</span><input v-model="form.phone" class="field" maxlength="30" /></label>
-      <label><span class="label">생년월일</span><input v-model="form.dateOfBirth" class="field" type="date" required /></label>
-      <label><span class="label">부서</span><input v-model="form.department" class="field" required /></label>
-      <label><span class="label">직급</span><input v-model="form.position" class="field" required /></label>
+      <label><span class="label">전화번호</span><input v-model="form.phone" class="field" maxlength="30" pattern="[0-9+() -]*" title="전화번호 형식을 확인하세요." /></label>
+      <label><span class="label">생년월일</span><input v-model="form.dateOfBirth" class="field" type="date" required :max="yesterday" /></label>
+      <label><span class="label">부서</span><input v-model="form.department" class="field" required maxlength="100" /></label>
+      <label><span class="label">직급</span><input v-model="form.position" class="field" required maxlength="100" /></label>
       <label><span class="label">Role</span><select v-model="form.role" class="field"><option value="EMPLOYEE">EMPLOYEE</option><option value="ADMIN">ADMIN</option></select></label>
-      <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required /></label>
+      <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required :max="today" /></label>
       <div class="flex gap-2 sm:col-span-2">
         <button class="btn-primary" :disabled="saving">{{ saving ? '생성 중...' : '직원 생성' }}</button>
         <RouterLink class="btn-secondary" to="/admin/employees">취소</RouterLink>

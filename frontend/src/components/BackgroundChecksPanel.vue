@@ -13,29 +13,41 @@ const error = ref('')
 const notice = ref('')
 const running = ref(false)
 let timer: number | undefined
+let historyTimer: number | undefined
 
 async function load() {
   error.value = ''
-  const [parts, checks] = await Promise.allSettled([
-      api.get<{ firstName: string; lastName: string }>(`/admin/employees/${props.employeeId}/background-checks/name-parts`),
-      api.get<{ checks: BackgroundCheckItem[] }>(`/admin/employees/${props.employeeId}/background-checks`),
-  ])
-  if (parts.status === 'fulfilled') {
-    firstName.value = parts.value.data.firstName
-    lastName.value = parts.value.data.lastName
+  try {
+    const parts = (await api.get<{ firstName: string; lastName: string }>(
+      `/admin/employees/${props.employeeId}/background-checks/name-parts`,
+    )).data
+    firstName.value = parts.firstName
+    lastName.value = parts.lastName
+  } catch (e) {
+    error.value = errorMessage(e)
   }
-  if (checks.status === 'fulfilled') history.value = checks.value.data.checks || []
-  const failed = parts.status === 'rejected' ? parts.reason : checks.status === 'rejected' ? checks.reason : null
-  if (failed) error.value = errorMessage(failed)
+  await refreshHistory()
 }
 
-async function refreshHistory() {
+async function refreshHistory(attempt = 0) {
+  if (historyTimer) window.clearTimeout(historyTimer)
   try {
     history.value = (await api.get<{ checks: BackgroundCheckItem[] }>(
       `/admin/employees/${props.employeeId}/background-checks`,
     )).data.checks || []
+    error.value = ''
+    if (notice.value.startsWith('History')) notice.value = ''
   } catch (e) {
-    error.value = errorMessage(e)
+    const status = axios.isAxiosError(e) ? e.response?.status : 0
+    const retryAfter = axios.isAxiosError(e) ? Number(e.response?.data?.retryAfter || 0) : 0
+    if ((status === 502 || status === 503) && attempt < 3) {
+      const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
+      notice.value = `History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/3)`
+      historyTimer = window.setTimeout(() => refreshHistory(attempt + 1), delay * 1000)
+    } else {
+      if (notice.value.startsWith('History')) notice.value = ''
+      error.value = errorMessage(e)
+    }
   }
 }
 
@@ -85,20 +97,23 @@ async function fetchDetail(checkId: string, attempt = 15) {
 }
 
 onMounted(load)
-onUnmounted(() => { if (timer) window.clearTimeout(timer) })
+onUnmounted(() => {
+  if (timer) window.clearTimeout(timer)
+  if (historyTimer) window.clearTimeout(historyTimer)
+})
 </script>
 
 <template>
   <section class="card mt-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div><h3 class="text-xl font-bold">Background Check</h3><p class="mt-1 text-sm text-slate-500">외부 서비스 결과는 내부 DB에 저장하지 않습니다.</p></div>
-      <button class="btn-secondary" type="button" @click="refreshHistory">History 새로고침</button>
+      <button class="btn-secondary" type="button" @click="refreshHistory()">History 새로고침</button>
     </div>
     <div v-if="error" class="error mt-4">{{ error }}</div>
     <div v-if="notice" class="success mt-4">{{ notice }}</div>
     <form class="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" @submit.prevent="run">
-      <label><span class="label">First name</span><input v-model="firstName" class="field" required /></label>
-      <label><span class="label">Last name</span><input v-model="lastName" class="field" required /></label>
+      <label><span class="label">First name</span><input v-model="firstName" class="field" required maxlength="100" pattern=".*\S.*" /></label>
+      <label><span class="label">Last name</span><input v-model="lastName" class="field" required maxlength="100" pattern=".*\S.*" /></label>
       <button class="btn-primary" :disabled="running">{{ running ? '조회 중...' : '조회 실행' }}</button>
     </form>
 

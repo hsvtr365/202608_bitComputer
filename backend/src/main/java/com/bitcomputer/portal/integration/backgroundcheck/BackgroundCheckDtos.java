@@ -1,5 +1,6 @@
 package com.bitcomputer.portal.integration.backgroundcheck;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -10,8 +11,9 @@ public final class BackgroundCheckDtos {
 
     public record CreateRequest(String employeeId, String firstName, String lastName, LocalDate dateOfBirth) {}
 
-    public record CreateOverrideRequest(@Size(max = 100) String firstName,
-                                        @Size(max = 100) String lastName) {}
+    public record CreateOverrideRequest(
+            @Size(max = 100) @Pattern(regexp = ".*\\S.*") String firstName,
+            @Size(max = 100) @Pattern(regexp = ".*\\S.*") String lastName) {}
 
     public record Created(String checkId, String employeeId, String status, Instant createdAt, String message) {}
 

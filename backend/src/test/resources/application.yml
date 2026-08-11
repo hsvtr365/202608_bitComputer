@@ -8,6 +8,9 @@ spring:
       ddl-auto: create-drop
   main:
     allow-bean-definition-overriding: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
 
 app:
   seed:
