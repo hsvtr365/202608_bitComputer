@@ -10,6 +10,7 @@
 - 외부 Background Check API: 제공된 Swagger 계약 사용
 
 외부 계약 원본은 `docs/background-check-swagger.yaml`에 보관한다.
+화면 디자인은 `design.md`의 모노스페이스·크림 캔버스·ASCII UI 규칙을 따른다.
 
 ## 로컬 실행
 

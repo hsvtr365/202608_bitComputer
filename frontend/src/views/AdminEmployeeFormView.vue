@@ -29,7 +29,7 @@ async function submit() {
 
 <template>
   <section class="max-w-4xl">
-    <div class="mb-6"><p class="text-sm font-semibold text-blue-600">Admin</p><h2 class="text-3xl font-bold">신규 직원 생성</h2></div>
+    <div class="mb-6"><p class="eyebrow">Admin</p><h2 class="text-3xl font-bold">신규 직원 생성</h2></div>
     <div v-if="error" class="error mb-4">{{ error }}</div>
     <form class="card grid gap-5 sm:grid-cols-2" @submit.prevent="submit">
       <label><span class="label">사번</span><input v-model="form.employeeNumber" class="field" required maxlength="40" /></label>

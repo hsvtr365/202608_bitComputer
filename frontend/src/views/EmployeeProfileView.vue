@@ -37,7 +37,7 @@ async function save() {
 <template>
   <section>
     <div class="mb-6">
-      <p class="text-sm font-semibold text-blue-600">Employee</p>
+      <p class="eyebrow">Employee</p>
       <h2 class="text-3xl font-bold">내 정보</h2>
     </div>
     <div v-if="error" class="error mb-4">{{ error }}</div>

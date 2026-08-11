@@ -68,7 +68,7 @@ onMounted(() => {
   <section v-if="employee">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <RouterLink class="text-sm font-semibold text-blue-600" to="/admin/employees">← 직원 목록</RouterLink>
+        <RouterLink class="back-link" to="/admin/employees">[-] 직원 목록</RouterLink>
         <h2 class="mt-2 text-3xl font-bold">{{ employee.name }}</h2>
         <p class="mt-1 text-slate-500">{{ employee.employeeNumber }}</p>
       </div>

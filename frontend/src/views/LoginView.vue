@@ -26,15 +26,26 @@ async function submit() {
 </script>
 
 <template>
-  <div class="mx-auto grid min-h-[75vh] max-w-5xl items-center gap-10 lg:grid-cols-2">
-    <section class="hidden lg:block">
-      <p class="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-blue-600">Internal Employee Portal</p>
-      <h2 class="text-4xl font-bold leading-tight">직원 정보와 권한을<br />안전하게 관리합니다.</h2>
-      <p class="mt-5 max-w-md leading-7 text-slate-600">재직 상태와 역할에 따라 필요한 정보만 제공합니다.</p>
+  <div class="login-shell">
+    <section class="terminal-panel" aria-label="비트컴퓨터 직원 포털 소개">
+      <pre class="ascii-wordmark" aria-hidden="true">██████╗ ██╗████████╗
+██╔══██╗██║╚══██╔══╝
+██████╔╝██║   ██║
+██╔══██╗██║   ██║
+██████╔╝██║   ██║
+╚═════╝ ╚═╝   ╚═╝</pre>
+      <p class="terminal-command"><span>&gt;</span> employee_portal --secure-session</p>
+      <div class="terminal-copy">
+        <p>[+] role_based_access</p>
+        <p>[+] active_status_check</p>
+        <p>[x] unauthorized_access</p>
+      </div>
+      <p class="terminal-hint">tab switch_role&nbsp;&nbsp; ctrl-l login</p>
     </section>
-    <form class="card mx-auto w-full max-w-md p-8" @submit.prevent="submit">
-      <h2 class="text-2xl font-bold">로그인</h2>
-      <p class="mt-2 text-sm text-slate-500">회사 계정으로 로그인하세요.</p>
+    <form class="login-form" @submit.prevent="submit">
+      <p class="eyebrow">Internal Employee Portal</p>
+      <h2>로그인</h2>
+      <p class="form-help">회사 계정으로 로그인하세요.</p>
       <div v-if="error" class="error mt-5" role="alert">{{ error }}</div>
       <label class="mt-6 block">
         <span class="label">이메일</span>
