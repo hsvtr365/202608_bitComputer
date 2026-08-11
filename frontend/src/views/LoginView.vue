@@ -27,6 +27,20 @@ async function submit() {
 
 <template>
   <div class="login-shell">
+    <section class="terminal-panel" aria-label="비트컴퓨터 직원 포털 소개">
+      <pre class="ascii-wordmark" aria-hidden="true">██████╗ ██╗████████╗
+██╔══██╗██║╚══██╔══╝
+██████╔╝██║   ██║
+██╔══██╗██║   ██║
+██████╔╝██║   ██║
+╚═════╝ ╚═╝   ╚═╝</pre>
+      <p class="terminal-command"><span>&gt;</span> employee_portal --secure-session</p>
+      <div class="terminal-copy">
+        <p>[+] role_based_access</p>
+        <p>[+] active_status_check</p>
+        <p>[x] unauthorized_access</p>
+      </div>
+    </section>
     <form class="login-form" @submit.prevent="submit">
       <p class="eyebrow">Internal Employee Portal</p>
       <h2>로그인</h2>
