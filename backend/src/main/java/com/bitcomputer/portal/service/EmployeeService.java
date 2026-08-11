@@ -3,9 +3,11 @@ package com.bitcomputer.portal.service;
 import com.bitcomputer.portal.domain.Employee;
 import com.bitcomputer.portal.domain.EmployeeStatus;
 import com.bitcomputer.portal.domain.Role;
+import com.bitcomputer.portal.domain.OrganizationCodeType;
 import com.bitcomputer.portal.dto.EmployeeDtos.*;
 import com.bitcomputer.portal.exception.AppException;
 import com.bitcomputer.portal.repository.EmployeeRepository;
+import com.bitcomputer.portal.repository.OrganizationCodeRepository;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -18,10 +20,13 @@ import org.springframework.util.StringUtils;
 @Transactional(readOnly = true)
 public class EmployeeService {
     private final EmployeeRepository employees;
+    private final OrganizationCodeRepository organizationCodes;
     private final PasswordEncoder passwordEncoder;
 
-    public EmployeeService(EmployeeRepository employees, PasswordEncoder passwordEncoder) {
+    public EmployeeService(EmployeeRepository employees, OrganizationCodeRepository organizationCodes,
+                           PasswordEncoder passwordEncoder) {
         this.employees = employees;
+        this.organizationCodes = organizationCodes;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -51,15 +56,17 @@ public class EmployeeService {
         if (employees.existsByEmailIgnoreCase(email)) {
             throw new AppException(HttpStatus.CONFLICT, "DUPLICATE_EMAIL", "이미 사용 중인 이메일입니다.");
         }
+        var department = validateCode(OrganizationCodeType.DEPARTMENT, request.department(), "부서");
+        var position = validateCode(OrganizationCodeType.POSITION, request.position(), "직급");
         var employee = new Employee();
         employee.setEmployeeNumber(request.employeeNumber().trim());
         employee.setName(request.name().trim());
         employee.setEmail(email);
         employee.setPasswordHash(passwordEncoder.encode(request.password()));
-        employee.setPhone(trimToNull(request.phone()));
+        if (request.phone() != null) employee.setPhone(trimToNull(request.phone()));
         employee.setDateOfBirth(request.dateOfBirth());
-        employee.setDepartment(request.department().trim());
-        employee.setPosition(request.position().trim());
+        employee.setDepartment(department);
+        employee.setPosition(position);
         employee.setRole(request.role());
         employee.setStatus(EmployeeStatus.ACTIVE);
         employee.setHireDate(request.hireDate());
@@ -80,8 +87,10 @@ public class EmployeeService {
         if (request.name() != null) employee.setName(request.name().trim());
         if (request.phone() != null) employee.setPhone(trimToNull(request.phone()));
         if (request.dateOfBirth() != null) employee.setDateOfBirth(request.dateOfBirth());
-        if (request.department() != null) employee.setDepartment(request.department().trim());
-        if (request.position() != null) employee.setPosition(request.position().trim());
+        if (request.department() != null) employee.setDepartment(
+                validateCode(OrganizationCodeType.DEPARTMENT, request.department(), "부서"));
+        if (request.position() != null) employee.setPosition(
+                validateCode(OrganizationCodeType.POSITION, request.position(), "직급"));
         if (request.role() != null) employee.setRole(request.role());
         if (request.hireDate() != null) employee.setHireDate(request.hireDate());
         return EmployeeResponse.from(employee);
@@ -90,7 +99,16 @@ public class EmployeeService {
     @Transactional
     public EmployeeResponse updateMe(Long id, UpdateMeRequest request) {
         var employee = getEntity(id);
-        employee.setPhone(trimToNull(request.phone()));
+        if (request.email() != null) {
+            var email = normalizeEmail(request.email());
+            employees.findByEmailIgnoreCase(email)
+                    .filter(other -> !other.getId().equals(id))
+                    .ifPresent(other -> { throw new AppException(HttpStatus.CONFLICT,
+                            "DUPLICATE_EMAIL", "이미 사용 중인 이메일입니다."); });
+            employee.setEmail(email);
+        }
+        if (request.name() != null) employee.setName(request.name().trim());
+        if (request.phone() != null) employee.setPhone(trimToNull(request.phone()));
         return EmployeeResponse.from(employee);
     }
 
@@ -112,6 +130,14 @@ public class EmployeeService {
     }
 
     private static String normalizeEmail(String value) { return value.trim().toLowerCase(); }
+    private String validateCode(OrganizationCodeType type, String value, String label) {
+        var normalized = value.trim();
+        if (!organizationCodes.existsByTypeAndName(type, normalized)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "INVALID_ORGANIZATION_CODE",
+                    "등록되지 않은 " + label + "입니다.");
+        }
+        return normalized;
+    }
     private static String trimToNull(String value) {
         if (value == null) return null;
         var trimmed = value.trim();

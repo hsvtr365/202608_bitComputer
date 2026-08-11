@@ -1,6 +1,7 @@
 package com.bitcomputer.portal;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -99,6 +100,41 @@ class SecurityIntegrationTest {
                         .session((org.springframework.mock.web.MockHttpSession) session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"phone\":\"010-1234-5678\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void employeeCanUpdateOwnPersonalInformation() throws Exception {
+        var employee = create("EMP-001", "employee@test.com", Role.EMPLOYEE, EmployeeStatus.ACTIVE);
+        var session = login("employee@test.com");
+
+        mvc.perform(patch("/api/me").with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"이서연\",\"email\":\"changed@test.com\",\"phone\":\"010-1234-5678\"}"))
+                .andExpect(status().isOk());
+
+        var changed = employees.findById(employee.getId()).orElseThrow();
+        assertThat(changed.getName()).isEqualTo("이서연");
+        assertThat(changed.getEmail()).isEqualTo("changed@test.com");
+        assertThat(changed.getPhone()).isEqualTo("010-1234-5678");
+        assertThat(changed.getDepartment()).isEqualTo("개발");
+        assertThat(changed.getPosition()).isEqualTo("사원");
+    }
+
+    @Test
+    void unknownOrganizationCodeIsRejected() throws Exception {
+        create("ADM-001", "actor@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var session = login("actor@test.com");
+
+        mvc.perform(post("/api/admin/employees").with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"employeeNumber":"EMP-NEW","name":"이서연","email":"new@test.com",
+                                 "password":"Password1!","phone":"010-1234-5678","dateOfBirth":"1995-01-01",
+                                 "department":"없는부서","position":"사원","role":"EMPLOYEE","hireDate":"2026-01-01"}
+                                """))
                 .andExpect(status().isBadRequest());
     }
 

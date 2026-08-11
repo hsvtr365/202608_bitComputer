@@ -1,18 +1,35 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, ensureCsrf, errorMessage } from '../api/client'
-import type { Employee, Role } from '../types'
+import type { Employee, OrganizationCode, Role } from '../types'
 
 const router = useRouter()
 const error = ref('')
 const saving = ref(false)
+const departments = ref<OrganizationCode[]>([])
+const positions = ref<OrganizationCode[]>([])
 const localNow = Date.now() - new Date().getTimezoneOffset() * 60000
 const today = new Date(localNow).toISOString().slice(0, 10)
 const yesterday = new Date(localNow - 86400000).toISOString().slice(0, 10)
 const form = reactive({
   employeeNumber: '', name: '', email: '', password: '', phone: '', dateOfBirth: '',
   department: '', position: '', role: 'EMPLOYEE' as Role, hireDate: new Date().toISOString().slice(0, 10),
+})
+
+onMounted(async () => {
+  try {
+    const [departmentResponse, positionResponse] = await Promise.all([
+      api.get<OrganizationCode[]>('/organization-codes/departments'),
+      api.get<OrganizationCode[]>('/organization-codes/positions'),
+    ])
+    departments.value = departmentResponse.data
+    positions.value = positionResponse.data
+    form.department ||= departments.value[0]?.name || ''
+    form.position ||= positions.value[0]?.name || ''
+  } catch (e) {
+    error.value = errorMessage(e)
+  }
 })
 
 async function submit() {
@@ -41,8 +58,8 @@ async function submit() {
       <label><span class="label">초기 비밀번호</span><input v-model="form.password" class="field" type="password" minlength="8" maxlength="72" required autocomplete="new-password" /></label>
       <label><span class="label">전화번호</span><input v-model="form.phone" class="field" maxlength="30" pattern="[0-9+() -]*" title="전화번호 형식을 확인하세요." /></label>
       <label><span class="label">생년월일</span><input v-model="form.dateOfBirth" class="field" type="date" required :max="yesterday" /></label>
-      <label><span class="label">부서</span><input v-model="form.department" class="field" required maxlength="100" /></label>
-      <label><span class="label">직급</span><input v-model="form.position" class="field" required maxlength="100" /></label>
+      <label><span class="label">부서</span><select v-model="form.department" class="field" required><option disabled value="">선택</option><option v-for="item in departments" :key="item.code" :value="item.name">{{ item.name }}</option></select></label>
+      <label><span class="label">직급</span><select v-model="form.position" class="field" required><option disabled value="">선택</option><option v-for="item in positions" :key="item.code" :value="item.name">{{ item.name }}</option></select></label>
       <label><span class="label">Role</span><select v-model="form.role" class="field"><option value="EMPLOYEE">EMPLOYEE</option><option value="ADMIN">ADMIN</option></select></label>
       <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required :max="today" /></label>
       <div class="flex gap-2 sm:col-span-2">

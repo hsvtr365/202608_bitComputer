@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BackgroundChecksPanel from '../components/BackgroundChecksPanel.vue'
 import { api, ensureCsrf, errorMessage } from '../api/client'
-import type { Employee, Role } from '../types'
+import type { Employee, OrganizationCode, Role } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,6 +12,8 @@ const employee = ref<Employee | null>(null)
 const error = ref('')
 const success = ref('')
 const saving = ref(false)
+const departments = ref<OrganizationCode[]>([])
+const positions = ref<OrganizationCode[]>([])
 const localNow = Date.now() - new Date().getTimezoneOffset() * 60000
 const today = new Date(localNow).toISOString().slice(0, 10)
 const yesterday = new Date(localNow - 86400000).toISOString().slice(0, 10)
@@ -26,7 +28,14 @@ function copyToForm(value: Employee) {
 
 async function load() {
   try {
-    employee.value = (await api.get<Employee>(`/admin/employees/${id}`)).data
+    const [employeeResponse, departmentResponse, positionResponse] = await Promise.all([
+      api.get<Employee>(`/admin/employees/${id}`),
+      api.get<OrganizationCode[]>('/organization-codes/departments'),
+      api.get<OrganizationCode[]>('/organization-codes/positions'),
+    ])
+    employee.value = employeeResponse.data
+    departments.value = departmentResponse.data
+    positions.value = positionResponse.data
     copyToForm(employee.value)
   } catch (e) {
     error.value = errorMessage(e)
@@ -87,8 +96,8 @@ onMounted(() => {
       <label><span class="label">이메일</span><input v-model="form.email" class="field" type="email" required maxlength="200" /></label>
       <label><span class="label">전화번호</span><input v-model="form.phone" class="field" maxlength="30" pattern="[0-9+() -]*" title="전화번호 형식을 확인하세요." /></label>
       <label><span class="label">생년월일</span><input v-model="form.dateOfBirth" class="field" type="date" required :max="yesterday" /></label>
-      <label><span class="label">부서</span><input v-model="form.department" class="field" required maxlength="100" /></label>
-      <label><span class="label">직급</span><input v-model="form.position" class="field" required maxlength="100" /></label>
+      <label><span class="label">부서</span><select v-model="form.department" class="field" required><option v-for="item in departments" :key="item.code" :value="item.name">{{ item.name }}</option></select></label>
+      <label><span class="label">직급</span><select v-model="form.position" class="field" required><option v-for="item in positions" :key="item.code" :value="item.name">{{ item.name }}</option></select></label>
       <label><span class="label">Role</span><select v-model="form.role" class="field"><option value="EMPLOYEE">EMPLOYEE</option><option value="ADMIN">ADMIN</option></select></label>
       <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required :max="today" /></label>
       <div class="sm:col-span-2"><button class="btn-primary" :disabled="saving">{{ saving ? '저장 중...' : '정보 저장' }}</button></div>

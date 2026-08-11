@@ -55,5 +55,7 @@ public final class EmployeeDtos {
             @PastOrPresent LocalDate hireDate) {}
 
     public record UpdateMeRequest(
+            @Size(min = 2, max = 100) @Pattern(regexp = "[가-힣]{2,100}") String name,
+            @Email @Size(min = 3, max = 200) String email,
             @Size(max = 30) @Pattern(regexp = "[0-9+() -]*") String phone) {}
 }

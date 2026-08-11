@@ -1,6 +1,11 @@
 export type Role = 'EMPLOYEE' | 'ADMIN'
 export type EmployeeStatus = 'ACTIVE' | 'TERMINATED'
 
+export interface OrganizationCode {
+  code: string
+  name: string
+}
+
 export interface AuthUser {
   id: number
   employeeNumber: string

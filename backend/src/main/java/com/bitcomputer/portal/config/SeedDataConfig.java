@@ -8,11 +8,13 @@ import java.time.LocalDate;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.util.StringUtils;
 
 @Configuration
 public class SeedDataConfig {
     @Bean
+    @Order(1)
     ApplicationRunner seedData(SeedProperties seed, EmployeeRepository repository, EmployeeService service) {
         return args -> {
             if (!seed.enabled()) return;

@@ -1,6 +1,6 @@
 # Internal Employee Portal
 
-비트컴퓨터 사내 직원 관리 과제다. 직원은 자신의 정보를 조회하고 전화번호를 수정한다. 관리자는 직원 계정·재직 상태·Background Check를 관리한다.
+비트컴퓨터 사내 직원 관리 과제다. 직원은 자신의 정보를 조회하고 이름·이메일·전화번호를 수정한다. 관리자는 직원 계정·재직 상태·Background Check를 관리한다.
 
 ## 기술 스택
 
@@ -57,6 +57,7 @@ PostgreSQL은 Tailscale VPN의 `100.92.167.33:5432`로 직접 연결한다. SSH 
 - 퇴사 직원은 신규 로그인과 기존 Session 요청이 즉시 차단된다.
 - 관리자 계정은 UI와 서버 양쪽에서 퇴사 처리를 금지한다.
 - 프런트 HTML Validation과 백엔드 Bean Validation을 모두 적용한다.
+- 부서와 직급은 `organization_codes` 코드 테이블의 등록값만 사용한다.
 
 ## Background Check
 
@@ -74,6 +75,7 @@ Vue → Spring Boot → External Background Check API
 
 - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/csrf`
 - `GET/PATCH /api/me`
+- `GET /api/organization-codes/departments`, `GET /api/organization-codes/positions`
 - `GET/POST /api/admin/employees`
 - `GET/PATCH /api/admin/employees/{id}`
 - `POST /api/admin/employees/{id}/terminate`
