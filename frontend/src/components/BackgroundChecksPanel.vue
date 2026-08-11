@@ -9,6 +9,9 @@ const firstName = ref('')
 const lastName = ref('')
 const history = ref<BackgroundCheckItem[]>([])
 const selected = ref<BackgroundCheckResult | null>(null)
+const historyPage = ref(0)
+const totalCount = ref(0)
+const totalPages = ref(1)
 const error = ref('')
 const notice = ref('')
 const running = ref(false)
@@ -29,12 +32,16 @@ async function load() {
   await refreshHistory()
 }
 
-async function refreshHistory(attempt = 0) {
+async function refreshHistory(page = historyPage.value, attempt = 0) {
   if (historyTimer) window.clearTimeout(historyTimer)
   try {
-    history.value = (await api.get<{ checks: BackgroundCheckItem[] }>(
-      `/admin/employees/${props.employeeId}/background-checks`,
-    )).data.checks || []
+    const response = (await api.get<{ checks: BackgroundCheckItem[]; totalCount: number; page: number; totalPages: number }>(
+      `/admin/employees/${props.employeeId}/background-checks`, { params: { page, size: 10 } },
+    )).data
+    history.value = response.checks || []
+    historyPage.value = response.page
+    totalCount.value = response.totalCount
+    totalPages.value = response.totalPages
     error.value = ''
     if (notice.value.startsWith('History')) notice.value = ''
   } catch (e) {
@@ -43,7 +50,7 @@ async function refreshHistory(attempt = 0) {
     if ((status === 502 || status === 503) && attempt < 3) {
       const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
       notice.value = `History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/3)`
-      historyTimer = window.setTimeout(() => refreshHistory(attempt + 1), delay * 1000)
+      historyTimer = window.setTimeout(() => refreshHistory(page, attempt + 1), delay * 1000)
     } else {
       if (notice.value.startsWith('History')) notice.value = ''
       error.value = errorMessage(e)
@@ -63,7 +70,7 @@ async function run() {
     )).data
     notice.value = created.status === 'pending' ? '조회가 진행 중입니다.' : '조회가 완료되었습니다.'
     await fetchDetail(created.checkId, 0)
-    await refreshHistory()
+    await refreshHistory(0)
   } catch (e) {
     error.value = errorMessage(e)
     running.value = false
@@ -82,7 +89,7 @@ async function fetchDetail(checkId: string, attempt = 15) {
       notice.value = selected.value.status === 'pending'
         ? '아직 처리 중입니다. 잠시 후 다시 확인해 주세요.'
         : 'Background Check가 완료되었습니다.'
-      await refreshHistory()
+      await refreshHistory(historyPage.value)
     }
   } catch (e) {
     const retryAfter = axios.isAxiosError(e) ? Number(e.response?.data?.retryAfter || 0) : 0
@@ -107,7 +114,7 @@ onUnmounted(() => {
   <section class="card mt-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div><h3 class="text-xl font-bold">Background Check</h3><p class="mt-1 text-sm text-slate-500">외부 서비스 결과는 내부 DB에 저장하지 않습니다.</p></div>
-      <button class="btn-secondary" type="button" @click="refreshHistory()">History 새로고침</button>
+      <button class="btn-secondary" type="button" @click="refreshHistory(0)">History 새로고침</button>
     </div>
     <div v-if="error" class="error mt-4">{{ error }}</div>
     <div v-if="notice" class="success mt-4">{{ notice }}</div>
@@ -129,7 +136,14 @@ onUnmounted(() => {
     </div>
 
     <div class="mt-6 overflow-x-auto">
-      <h4 class="mb-3 font-bold">History</h4>
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h4 class="font-bold">History ({{ totalCount }})</h4>
+        <div class="flex items-center gap-2 text-sm">
+          <button class="btn-secondary" type="button" :disabled="historyPage === 0" @click="refreshHistory(historyPage - 1)">이전</button>
+          <span>{{ historyPage + 1 }} / {{ totalPages }}</span>
+          <button class="btn-secondary" type="button" :disabled="historyPage + 1 >= totalPages" @click="refreshHistory(historyPage + 1)">다음</button>
+        </div>
+      </div>
       <table class="data-table w-full min-w-[620px] text-left text-sm">
         <thead><tr><th class="py-2">Check ID</th><th>상태</th><th>요청 시각</th><th>완료 시각</th></tr></thead>
         <tbody>

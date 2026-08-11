@@ -4,6 +4,7 @@ import com.bitcomputer.portal.exception.AppException;
 import com.bitcomputer.portal.integration.backgroundcheck.BackgroundCheckClient;
 import com.bitcomputer.portal.integration.backgroundcheck.BackgroundCheckDtos.*;
 import com.bitcomputer.portal.integration.backgroundcheck.KoreanNameMapper;
+import java.util.Comparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -38,8 +39,20 @@ public class BackgroundCheckService {
                 employee.getDateOfBirth()));
     }
 
-    public History history(Long employeeId) {
-        return client.history(employees.getEntity(employeeId).getEmployeeNumber());
+    public HistoryPage history(Long employeeId, int page, int size) {
+        var history = client.history(employees.getEntity(employeeId).getEmployeeNumber());
+        var checks = history.checks().stream()
+                .sorted(Comparator.comparing(HistoryItem::completedAt,
+                                Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(HistoryItem::createdAt, Comparator.reverseOrder()))
+                .toList();
+        var totalCount = checks.size();
+        var totalPages = Math.max(1, (totalCount + size - 1) / size);
+        var effectivePage = Math.min(page, totalPages - 1);
+        var from = effectivePage * size;
+        var to = Math.min(from + size, totalCount);
+        return new HistoryPage(history.employeeId(), checks.subList(from, to), totalCount, effectivePage, size,
+                totalPages);
     }
 
     public Result get(String checkId) { return client.get(checkId); }
