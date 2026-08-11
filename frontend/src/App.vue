@@ -1,13 +1,20 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/auth'
 
 const router = useRouter()
 const auth = useAuth()
+const loggingOut = ref(false)
 
 async function logout() {
-  await auth.logout()
-  await router.push('/login')
+  loggingOut.value = true
+  try {
+    await auth.logout()
+    await router.push('/login')
+  } finally {
+    loggingOut.value = false
+  }
 }
 </script>
 
@@ -23,7 +30,7 @@ async function logout() {
           <RouterLink v-if="auth.isAdmin.value" class="nav-link" to="/admin/employees">직원 관리</RouterLink>
           <RouterLink v-else class="nav-link" to="/employee/profile">내 정보</RouterLink>
           <span class="user-name">{{ auth.user.value.name }}</span>
-          <button class="btn-secondary" @click="logout">로그아웃</button>
+          <button class="btn-secondary" :disabled="loggingOut" :aria-busy="loggingOut" @click="logout"><span v-if="loggingOut" class="button-spinner" aria-hidden="true" />{{ loggingOut ? '로그아웃 중...' : '로그아웃' }}</button>
         </nav>
       </div>
     </header>

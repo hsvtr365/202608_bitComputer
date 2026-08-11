@@ -34,7 +34,7 @@ onMounted(load)
     </div>
     <form class="card mb-5 flex gap-2 p-4" @submit.prevent="load">
       <input v-model="query" class="field" aria-label="이름 또는 사번 검색" placeholder="이름 또는 사번" maxlength="100" />
-      <button class="btn-secondary shrink-0">검색</button>
+      <button class="btn-secondary shrink-0" :disabled="loading" :aria-busy="loading"><span v-if="loading" class="button-spinner" aria-hidden="true" />{{ loading ? '검색 중...' : '검색' }}</button>
     </form>
     <div v-if="error" class="error mb-4">{{ error }}</div>
     <div class="card overflow-x-auto p-0">

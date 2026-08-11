@@ -12,6 +12,7 @@ const employee = ref<Employee | null>(null)
 const error = ref('')
 const success = ref('')
 const saving = ref(false)
+const terminating = ref(false)
 const departments = ref<OrganizationCode[]>([])
 const positions = ref<OrganizationCode[]>([])
 const localNow = Date.now() - new Date().getTimezoneOffset() * 60000
@@ -61,12 +62,15 @@ async function save() {
 async function terminate() {
   if (!employee.value || !window.confirm(`${employee.value.name} 직원을 퇴사 처리합니까? 즉시 접근이 차단됩니다.`)) return
   error.value = ''
+  terminating.value = true
   try {
     await ensureCsrf()
     employee.value = (await api.post<Employee>(`/admin/employees/${id}/terminate`)).data
     success.value = '퇴사 처리했습니다.'
   } catch (e) {
     error.value = errorMessage(e)
+  } finally {
+    terminating.value = false
   }
 }
 
@@ -86,7 +90,7 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-3">
         <span :class="employee.status === 'ACTIVE' ? 'badge-active' : 'badge-terminated'">{{ employee.status === 'ACTIVE' ? '재직' : '퇴사' }}</span>
-        <button v-if="employee.status === 'ACTIVE' && employee.role !== 'ADMIN'" class="btn-danger" type="button" @click="terminate">퇴사 처리</button>
+        <button v-if="employee.status === 'ACTIVE' && employee.role !== 'ADMIN'" class="btn-danger" type="button" :disabled="terminating" :aria-busy="terminating" @click="terminate"><span v-if="terminating" class="button-spinner" aria-hidden="true" />{{ terminating ? '퇴사 처리 중...' : '퇴사 처리' }}</button>
       </div>
     </div>
     <div v-if="error" class="error mb-4">{{ error }}</div>
@@ -100,7 +104,7 @@ onMounted(() => {
       <label><span class="label">직급</span><select v-model="form.position" class="field" required><option v-for="item in positions" :key="item.code" :value="item.name">{{ item.name }}</option></select></label>
       <label><span class="label">Role</span><select v-model="form.role" class="field"><option value="EMPLOYEE">EMPLOYEE</option><option value="ADMIN">ADMIN</option></select></label>
       <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required :max="today" /></label>
-      <div class="sm:col-span-2"><button class="btn-primary" :disabled="saving">{{ saving ? '저장 중...' : '정보 저장' }}</button></div>
+      <div class="sm:col-span-2"><button class="btn-primary" :disabled="saving" :aria-busy="saving"><span v-if="saving" class="button-spinner" aria-hidden="true" />{{ saving ? '저장 중...' : '정보 저장' }}</button></div>
     </form>
     <BackgroundChecksPanel :employee-id="id" />
   </section>

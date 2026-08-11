@@ -76,7 +76,7 @@ async function save() {
         </label>
         </div>
         <p class="mt-2 text-xs text-slate-500">이름, 이메일, 전화번호만 직접 수정할 수 있습니다.</p>
-        <button class="btn-primary mt-4" :disabled="saving">{{ saving ? '저장 중...' : '저장' }}</button>
+        <button class="btn-primary mt-4" :disabled="saving" :aria-busy="saving"><span v-if="saving" class="button-spinner" aria-hidden="true" />{{ saving ? '저장 중...' : '저장' }}</button>
       </form>
     </div>
   </section>

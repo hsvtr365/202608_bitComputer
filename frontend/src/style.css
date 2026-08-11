@@ -99,6 +99,8 @@ a { color: inherit; }
 .btn-danger { border: 1px solid var(--danger); background: var(--danger); color: white; }
 .btn-danger:hover { background: var(--danger-deep); }
 .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled { cursor: not-allowed; border-color: var(--surface-card); background: var(--surface-card); color: var(--ash); }
+.button-spinner { width: 12px; height: 12px; margin-right: 7px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: button-spin 700ms linear infinite; }
+@keyframes button-spin { to { transform: rotate(360deg); } }
 
 .nav-link { min-height: 36px; border: 0; padding-inline: 8px; color: var(--mute); }
 .nav-link::before { content: "["; margin-right: 2px; }

@@ -63,7 +63,7 @@ async function submit() {
       <label><span class="label">Role</span><select v-model="form.role" class="field"><option value="EMPLOYEE">EMPLOYEE</option><option value="ADMIN">ADMIN</option></select></label>
       <label><span class="label">입사일</span><input v-model="form.hireDate" class="field" type="date" required :max="today" /></label>
       <div class="flex gap-2 sm:col-span-2">
-        <button class="btn-primary" :disabled="saving">{{ saving ? '생성 중...' : '직원 생성' }}</button>
+        <button class="btn-primary" :disabled="saving" :aria-busy="saving"><span v-if="saving" class="button-spinner" aria-hidden="true" />{{ saving ? '생성 중...' : '직원 생성' }}</button>
         <RouterLink class="btn-secondary" to="/admin/employees">취소</RouterLink>
       </div>
     </form>

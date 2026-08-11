@@ -55,7 +55,8 @@ async function submit() {
         <span class="label">비밀번호</span>
         <input v-model="password" class="field" type="password" autocomplete="current-password" required maxlength="72" />
       </label>
-      <button class="btn-primary mt-6 w-full" :disabled="loading">
+      <button class="btn-primary mt-6 w-full" :disabled="loading" :aria-busy="loading">
+        <span v-if="loading" class="button-spinner" aria-hidden="true" />
         {{ loading ? '로그인 중...' : '로그인' }}
       </button>
     </form>
