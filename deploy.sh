@@ -22,7 +22,7 @@ export VITE_BASE_PATH="${VITE_BASE_PATH:-/bitComProject/}"
 sudo install -d -m 755 "$WEB_ROOT"
 sudo rsync -a frontend/dist/ "$WEB_ROOT/"
 
-(cd backend && ./gradlew bootJar --no-daemon)
+(cd backend && bash ./gradlew bootJar --no-daemon)
 JAR_FILE="$(find "$ROOT_DIR/backend/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*plain.jar' -print -quit)"
 test -n "$JAR_FILE" || { echo 'boot jar missing'; exit 1; }
 
