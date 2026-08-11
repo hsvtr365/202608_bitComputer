@@ -13,6 +13,7 @@ const historyPage = ref(0)
 const totalCount = ref(0)
 const totalPages = ref(1)
 const refreshing = ref(false)
+const paging = ref(false)
 const error = ref('')
 const errorContext = ref<'check' | 'history' | 'load' | null>(null)
 const notice = ref('')
@@ -50,7 +51,8 @@ async function load() {
 
 async function refreshHistory(page = historyPage.value, attempt = 0, notify = false) {
   if (historyTimer) window.clearTimeout(historyTimer)
-  refreshing.value = true
+  if (notify) refreshing.value = true
+  else paging.value = true
   try {
     const response = (await api.get<{ checks: BackgroundCheckItem[]; totalCount: number; page: number; totalPages: number }>(
       `/admin/employees/${props.employeeId}/background-checks`, { params: { page, size: 10 } },
@@ -66,6 +68,7 @@ async function refreshHistory(page = historyPage.value, attempt = 0, notify = fa
     if (notice.value.startsWith('History')) notice.value = ''
     if (notify) showNotice('History를 새로고침했습니다.', 'success')
     refreshing.value = false
+    paging.value = false
   } catch (e) {
     const status = axios.isAxiosError(e) ? e.response?.status : 0
     const retryAfter = axios.isAxiosError(e) ? Number(e.response?.data?.retryAfter || 0) : 0
@@ -77,6 +80,7 @@ async function refreshHistory(page = historyPage.value, attempt = 0, notify = fa
       if (notice.value.startsWith('History')) notice.value = ''
       showError(e, 'history')
       refreshing.value = false
+      paging.value = false
     }
   }
 }
@@ -140,14 +144,14 @@ onUnmounted(() => {
   <section class="card mt-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div><h3 class="text-xl font-bold">Background Check</h3><p class="mt-1 text-sm text-slate-500">외부 서비스 결과는 내부 DB에 저장하지 않습니다.</p></div>
-      <button class="btn-secondary" type="button" :disabled="refreshing || running" :aria-busy="refreshing" @click="refreshHistory(0, 0, true)"><span v-if="refreshing" class="button-spinner" aria-hidden="true" />{{ refreshing ? 'History 갱신 중...' : 'History 새로고침' }}</button>
+      <button class="btn-secondary" type="button" :disabled="refreshing || paging || running" :aria-busy="refreshing" @click="refreshHistory(0, 0, true)"><span v-if="refreshing" class="button-spinner" aria-hidden="true" />{{ refreshing ? 'History 갱신 중...' : 'History 새로고침' }}</button>
     </div>
     <div v-if="error" class="error mt-4" role="alert">{{ error }}</div>
     <div v-else-if="notice" :class="[noticeType, 'mt-4']" role="status">{{ notice }}</div>
     <form class="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" @submit.prevent="run">
       <label><span class="label">First name</span><input v-model="firstName" class="field" required maxlength="100" pattern="[\p{L}][\p{L} -]{0,99}" title="문자, 공백, -만 입력하세요." :disabled="running" /></label>
       <label><span class="label">Last name</span><input v-model="lastName" class="field" required maxlength="100" pattern="[\p{L}][\p{L} -]{0,99}" title="문자, 공백, -만 입력하세요." :disabled="running" /></label>
-      <button class="btn-primary" :disabled="running || refreshing" :aria-busy="running"><span v-if="running" class="button-spinner" aria-hidden="true" />{{ running ? '조회 중...' : '조회 실행' }}</button>
+      <button class="btn-primary" :disabled="running || refreshing || paging" :aria-busy="running"><span v-if="running" class="button-spinner" aria-hidden="true" />{{ running ? '조회 중...' : '조회 실행' }}</button>
     </form>
 
     <div v-if="selected" class="result-block mt-6">
@@ -165,9 +169,9 @@ onUnmounted(() => {
       <div class="mb-3 flex items-center justify-between gap-3">
         <h4 class="font-bold">History ({{ totalCount }})</h4>
         <div class="flex items-center gap-2 text-sm">
-          <button class="btn-secondary" type="button" :disabled="refreshing || running || historyPage === 0" @click="refreshHistory(historyPage - 1)">이전</button>
+          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage === 0" @click="refreshHistory(historyPage - 1)">이전</button>
           <span>{{ historyPage + 1 }} / {{ totalPages }}</span>
-          <button class="btn-secondary" type="button" :disabled="refreshing || running || historyPage + 1 >= totalPages" @click="refreshHistory(historyPage + 1)">다음</button>
+          <button class="btn-secondary" type="button" :disabled="refreshing || paging || running || historyPage + 1 >= totalPages" @click="refreshHistory(historyPage + 1)">다음</button>
         </div>
       </div>
       <table class="data-table w-full min-w-[620px] text-left text-sm">
@@ -175,7 +179,7 @@ onUnmounted(() => {
         <tbody>
           <tr v-if="history.length === 0"><td class="py-4 text-slate-500" colspan="4">조회 이력이 없습니다.</td></tr>
           <tr v-for="item in history" :key="item.checkId">
-            <td class="py-3"><button class="row-link" type="button" :disabled="running || refreshing" @click="fetchDetail(item.checkId)">{{ item.checkId }}</button></td>
+            <td class="py-3"><button class="row-link" type="button" :disabled="running || refreshing || paging" @click="fetchDetail(item.checkId)">{{ item.checkId }}</button></td>
             <td class="uppercase">{{ item.status }}</td><td>{{ new Date(item.createdAt).toLocaleString() }}</td><td>{{ item.completedAt ? new Date(item.completedAt).toLocaleString() : '-' }}</td>
           </tr>
         </tbody>
