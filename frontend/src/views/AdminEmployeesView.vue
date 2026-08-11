@@ -33,7 +33,7 @@ onMounted(load)
       <RouterLink class="btn-primary" to="/admin/employees/new">신규 직원 생성</RouterLink>
     </div>
     <form class="card mb-5 flex gap-2 p-4" @submit.prevent="load">
-      <input v-model="query" class="field" aria-label="이름 또는 사번 검색" placeholder="이름 또는 사번" maxlength="100" />
+      <input v-model="query" class="field" aria-label="이름 또는 사번 검색" placeholder="이름 또는 사번" maxlength="100" pattern="[A-Za-z0-9가-힣 _-]*" title="한글, 영문, 숫자, 공백, -, _만 입력하세요." />
       <button class="btn-secondary shrink-0" :disabled="loading" :aria-busy="loading"><span v-if="loading" class="button-spinner" aria-hidden="true" />{{ loading ? '검색 중...' : '검색' }}</button>
     </form>
     <div v-if="error" class="error mb-4">{{ error }}</div>

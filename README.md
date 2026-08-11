@@ -58,6 +58,8 @@ PostgreSQL은 Tailscale VPN의 `100.92.167.33:5432`로 직접 연결한다. SSH 
 - 관리자 계정은 UI와 서버 양쪽에서 퇴사 처리를 금지한다.
 - 프런트 HTML Validation과 백엔드 Bean Validation을 모두 적용한다.
 - 부서와 직급은 `organization_codes` 코드 테이블의 등록값만 사용한다.
+- Vue 텍스트 이스케이프, 허용목록 입력 검증, CSRF, DB 파라미터 바인딩으로 XSS·인젝션을 차단한다.
+- 배포 Nginx는 CSP, frame 차단, `nosniff` 보안 헤더를 적용한다.
 
 ## Background Check
 

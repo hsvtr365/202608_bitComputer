@@ -1,6 +1,7 @@
 package com.bitcomputer.portal.exception;
 
 import com.bitcomputer.portal.dto.ApiError;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +41,12 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> malformedRequest() {
         return ResponseEntity.badRequest()
                 .body(ApiError.of("INVALID_REQUEST", "요청 형식 또는 입력값이 올바르지 않습니다."));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<ApiError> invalidParameter() {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("INVALID_REQUEST", "요청 파라미터가 올바르지 않습니다."));
     }
 
     @ExceptionHandler(Exception.class)

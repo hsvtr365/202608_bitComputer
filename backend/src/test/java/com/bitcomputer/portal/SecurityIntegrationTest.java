@@ -138,6 +138,33 @@ class SecurityIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void maliciousInputIsRejectedBeforeItCanBeStoredOrForwarded() throws Exception {
+        var admin = create("ADM-001", "actor@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var employee = create("EMP-001", "employee@test.com", Role.EMPLOYEE, EmployeeStatus.ACTIVE);
+        var session = login(admin.getEmail());
+
+        mvc.perform(post("/api/admin/employees").with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"employeeNumber":"EMP-XSS","name":"<script>alert(1)</script>","email":"xss@test.com",
+                                 "password":"Password1!","dateOfBirth":"1995-01-01","department":"개발",
+                                 "position":"사원","role":"EMPLOYEE","hireDate":"2026-01-01"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mvc.perform(post("/api/admin/employees/{id}/background-checks", employee.getId()).with(csrf())
+                        .session((org.springframework.mock.web.MockHttpSession) session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"<script>alert(1)</script>\",\"lastName\":\"김\"}"))
+                .andExpect(status().isBadRequest());
+
+        mvc.perform(get("/api/admin/employees").param("q", "' OR 1=1 --")
+                        .session((org.springframework.mock.web.MockHttpSession) session))
+                .andExpect(status().isBadRequest());
+    }
+
     private HttpSession login(String email) throws Exception {
         return mvc.perform(post("/api/auth/login").with(csrf())
                         .param("email", email).param("password", "Password1!"))

@@ -12,8 +12,8 @@ public final class BackgroundCheckDtos {
     public record CreateRequest(String employeeId, String firstName, String lastName, LocalDate dateOfBirth) {}
 
     public record CreateOverrideRequest(
-            @Size(max = 100) @Pattern(regexp = ".*\\S.*") String firstName,
-            @Size(max = 100) @Pattern(regexp = ".*\\S.*") String lastName) {}
+            @Size(max = 100) @Pattern(regexp = "[\\p{L}][\\p{L} -]{0,99}") String firstName,
+            @Size(max = 100) @Pattern(regexp = "[\\p{L}][\\p{L} -]{0,99}") String lastName) {}
 
     public record Created(String checkId, String employeeId, String status, Instant createdAt, String message) {}
 

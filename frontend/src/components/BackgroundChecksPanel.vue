@@ -123,8 +123,8 @@ onUnmounted(() => {
     <div v-if="error" class="error mt-4">{{ error }}</div>
     <div v-if="notice" class="success mt-4">{{ notice }}</div>
     <form class="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" @submit.prevent="run">
-      <label><span class="label">First name</span><input v-model="firstName" class="field" required maxlength="100" pattern=".*\S.*" /></label>
-      <label><span class="label">Last name</span><input v-model="lastName" class="field" required maxlength="100" pattern=".*\S.*" /></label>
+      <label><span class="label">First name</span><input v-model="firstName" class="field" required maxlength="100" pattern="[\p{L}][\p{L} -]{0,99}" title="문자, 공백, -만 입력하세요." /></label>
+      <label><span class="label">Last name</span><input v-model="lastName" class="field" required maxlength="100" pattern="[\p{L}][\p{L} -]{0,99}" title="문자, 공백, -만 입력하세요." /></label>
       <button class="btn-primary" :disabled="running" :aria-busy="running"><span v-if="running" class="button-spinner" aria-hidden="true" />{{ running ? '조회 중...' : '조회 실행' }}</button>
     </form>
 
