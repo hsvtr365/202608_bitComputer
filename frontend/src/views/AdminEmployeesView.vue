@@ -53,15 +53,14 @@ onMounted(load)
     <form class="card mb-5 flex flex-wrap gap-2 p-4" @submit.prevent="load(0)">
       <input v-model="query" class="field min-w-52 flex-1" aria-label="이름 또는 사번 검색" placeholder="이름 또는 사번" maxlength="100" pattern="[A-Za-z0-9가-힣 _-]*" title="한글, 영문, 숫자, 공백, -, _만 입력하세요." />
       <label class="flex items-center gap-2 text-sm"><span>표시</span><select v-model.number="pageSize" class="field w-20" :disabled="loading" @change="load(0)"><option :value="10">10</option><option :value="15">15</option><option :value="30">30</option><option :value="50">50</option></select></label>
-      <button class="btn-secondary shrink-0" :disabled="loading" :aria-busy="loading"><span v-if="loading" class="button-spinner" aria-hidden="true" />{{ loading ? '검색 중...' : '검색' }}</button>
+      <button class="btn-secondary shrink-0" :disabled="loading" :aria-busy="loading">검색</button>
     </form>
     <div v-if="error" class="error mb-4">{{ error }}</div>
     <div class="card overflow-x-auto p-0">
       <table class="data-table w-full min-w-[850px] text-left text-sm">
         <thead><tr><th class="p-4">사번</th><th>이름</th><th>부서</th><th>직급</th><th>이메일</th><th>상태</th><th>입사일</th></tr></thead>
         <tbody>
-          <tr v-if="loading"><td class="p-5 text-slate-500" colspan="7">불러오는 중...</td></tr>
-          <tr v-else-if="employees.length === 0"><td class="p-5 text-slate-500" colspan="7">직원이 없습니다.</td></tr>
+          <tr v-if="employees.length === 0"><td class="p-5 text-slate-500" colspan="7">직원이 없습니다.</td></tr>
           <tr v-for="employee in employees" v-else :key="employee.id">
             <td class="p-4"><RouterLink class="row-link" :to="`/admin/employees/${employee.id}`">{{ employee.employeeNumber }}</RouterLink></td>
             <td class="font-semibold">{{ employee.name }}</td><td>{{ employee.department }}</td><td>{{ employee.position }}</td><td>{{ employee.email }}</td>
