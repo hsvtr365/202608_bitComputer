@@ -10,6 +10,8 @@ import com.bitcomputer.portal.repository.EmployeeRepository;
 import com.bitcomputer.portal.repository.OrganizationCodeRepository;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,12 +41,14 @@ public class EmployeeService {
         return EmployeeResponse.from(getEntity(id));
     }
 
-    public List<EmployeeResponse> list(String query) {
+    public EmployeePage list(String query, int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("hireDate"), Sort.Order.asc("employeeNumber")));
         var rows = StringUtils.hasText(query)
-                ? employees.findByNameContainingIgnoreCaseOrEmployeeNumberContainingIgnoreCaseOrderByEmployeeNumberAsc(
-                        query.trim(), query.trim())
-                : employees.findAllByOrderByEmployeeNumberAsc();
-        return rows.stream().map(EmployeeResponse::from).toList();
+                ? employees.findByNameContainingIgnoreCaseOrEmployeeNumberContainingIgnoreCase(
+                        query.trim(), query.trim(), pageable)
+                : employees.findAll(pageable);
+        return new EmployeePage(rows.getContent().stream().map(EmployeeResponse::from).toList(),
+                rows.getNumber(), rows.getSize(), rows.getTotalElements(), rows.getTotalPages());
     }
 
     @Transactional

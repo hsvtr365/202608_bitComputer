@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import com.bitcomputer.portal.domain.Employee;
 import com.bitcomputer.portal.domain.EmployeeStatus;
@@ -40,6 +41,25 @@ class SecurityIntegrationTest {
         var session = login("employee@test.com");
         mvc.perform(get("/api/admin/employees").session((org.springframework.mock.web.MockHttpSession) session))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminEmployeeListIsPagedAndOrderedByNewestHireDate() throws Exception {
+        var admin = create("ADM-001", "admin@test.com", Role.ADMIN, EmployeeStatus.ACTIVE);
+        var oldest = create("EMP-001", "old@test.com", Role.EMPLOYEE, EmployeeStatus.ACTIVE);
+        var newest = create("EMP-002", "new@test.com", Role.EMPLOYEE, EmployeeStatus.ACTIVE);
+        oldest.setHireDate(LocalDate.of(2022, 1, 1));
+        newest.setHireDate(LocalDate.of(2026, 1, 1));
+        employees.saveAndFlush(oldest);
+        employees.saveAndFlush(newest);
+
+        mvc.perform(get("/api/admin/employees").param("page", "0").param("size", "2")
+                        .session((org.springframework.mock.web.MockHttpSession) login(admin.getEmail())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCount").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.employees[0].employeeNumber").value("EMP-002"))
+                .andExpect(jsonPath("$.employees[1].employeeNumber").value("ADM-001"));
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.bitcomputer.portal.domain.Role;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 public final class EmployeeDtos {
     private EmployeeDtos() {}
@@ -31,6 +32,9 @@ public final class EmployeeDtos {
                     e.getStatus(), e.getHireDate(), e.getTerminationDate(), e.getCreatedAt(), e.getUpdatedAt());
         }
     }
+
+    public record EmployeePage(List<EmployeeResponse> employees, int page, int size,
+                               long totalCount, int totalPages) {}
 
     public record CreateEmployeeRequest(
             @NotBlank @Size(max = 40) @Pattern(regexp = "[A-Za-z0-9_-]+") String employeeNumber,

@@ -6,7 +6,6 @@ import com.bitcomputer.portal.service.EmployeeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,9 +20,12 @@ public class AdminEmployeeController {
     public AdminEmployeeController(EmployeeService employees) { this.employees = employees; }
 
     @GetMapping
-    public List<EmployeeResponse> list(@RequestParam(required = false) @Size(max = 100)
-                                       @Pattern(regexp = "[A-Za-z0-9가-힣 _-]*") String q) {
-        return employees.list(q);
+    public EmployeePage list(@RequestParam(required = false) @Size(max = 100)
+                             @Pattern(regexp = "[A-Za-z0-9가-힣 _-]*") String q,
+                             @RequestParam(defaultValue = "0") @jakarta.validation.constraints.Min(0) int page,
+                             @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1)
+                             @jakarta.validation.constraints.Max(50) int size) {
+        return employees.list(q, page, size);
     }
 
     @PostMapping
