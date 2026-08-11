@@ -39,9 +39,9 @@ async function refreshHistory(page = historyPage.value, attempt = 0) {
       `/admin/employees/${props.employeeId}/background-checks`, { params: { page, size: 10 } },
     )).data
     history.value = response.checks || []
-    historyPage.value = response.page
-    totalCount.value = response.totalCount
-    totalPages.value = response.totalPages
+    historyPage.value = Number.isInteger(response.page) ? response.page : 0
+    totalCount.value = Number.isInteger(response.totalCount) ? response.totalCount : history.value.length
+    totalPages.value = Number.isInteger(response.totalPages) && response.totalPages > 0 ? response.totalPages : 1
     error.value = ''
     if (notice.value.startsWith('History')) notice.value = ''
   } catch (e) {
