@@ -61,16 +61,16 @@ async function requestHistory(page: number) {
 }
 
 async function requestHistoryWithRetry(page: number) {
-  for (let attempt = 0; attempt <= 3; attempt += 1) {
+  for (let attempt = 0; attempt <= 5; attempt += 1) {
     try {
       await requestHistory(page)
       return
     } catch (error) {
       const status = axios.isAxiosError(error) ? error.response?.status : 0
-      if ((status !== 502 && status !== 503) || attempt === 3) throw error
+      if ((status !== 502 && status !== 503) || attempt === 5) throw error
       const retryAfter = axios.isAxiosError(error) ? Number(error.response?.data?.retryAfter || 0) : 0
       const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
-      show(`History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/3)`, 'warning', 'history')
+      show(`History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/5)`, 'warning', 'history')
       await wait(delay * 1000)
     }
   }
@@ -187,7 +187,6 @@ onUnmounted(() => {
   <section class="card mt-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div><h3 class="text-xl font-bold">Background Check</h3><p class="mt-1 text-sm text-slate-500">외부 서비스 결과는 내부 DB에 저장하지 않습니다.</p></div>
-      <button class="btn-secondary" type="button" :disabled="busy" :aria-busy="refreshing" @click="refreshHistory"><span v-if="refreshing" class="button-spinner" aria-hidden="true" />{{ refreshing ? 'History 갱신 중...' : 'History 새로고침' }}</button>
     </div>
     <div v-if="feedback" :class="[feedback.type, 'mt-4']" :role="feedback.type === 'error' ? 'alert' : 'status'">{{ feedback.message }}</div>
     <form class="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" @submit.prevent="run">
@@ -209,7 +208,7 @@ onUnmounted(() => {
 
     <div class="mt-6 overflow-x-auto">
       <div class="mb-3 flex items-center justify-between gap-3">
-        <h4 class="font-bold">History ({{ totalCount }})</h4>
+        <div class="flex items-center gap-2"><h4 class="font-bold">History ({{ totalCount }})</h4><button class="history-refresh-button" type="button" :disabled="busy" :aria-busy="refreshing" aria-label="History 새로고침" title="History 새로고침" @click="refreshHistory"><span v-if="refreshing" class="button-spinner" aria-hidden="true" /><span v-else aria-hidden="true">↻</span></button></div>
         <div class="flex items-center gap-2 text-sm">
           <button class="btn-secondary" type="button" :disabled="busy || historyPage === 0" @click="goToHistoryPage(historyPage - 1)">이전</button>
           <span>{{ historyPage + 1 }} / {{ totalPages }}</span>

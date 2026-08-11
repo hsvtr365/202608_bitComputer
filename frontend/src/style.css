@@ -102,6 +102,10 @@ a { color: inherit; }
 .btn-danger:hover { background: var(--danger-deep); }
 .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled { cursor: not-allowed; border-color: var(--surface-card); background: var(--surface-card); color: var(--ash); }
 .button-spinner { width: 12px; height: 12px; margin-right: 7px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: button-spin 700ms linear infinite; }
+.history-refresh-button { display: inline-grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--hairline-strong); border-radius: 50%; background: var(--canvas); color: var(--ink); font-size: 18px; line-height: 1; }
+.history-refresh-button:hover { background: var(--surface-soft); }
+.history-refresh-button:disabled { cursor: not-allowed; border-color: var(--surface-card); background: var(--surface-card); color: var(--ash); }
+.history-refresh-button .button-spinner { margin-right: 0; }
 @keyframes button-spin { to { transform: rotate(360deg); } }
 
 .nav-link { min-height: 36px; border: 0; padding-inline: 8px; color: var(--mute); }
