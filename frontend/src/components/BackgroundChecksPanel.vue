@@ -60,6 +60,22 @@ async function requestHistory(page: number) {
   showHistoryPage(page)
 }
 
+async function requestHistoryWithRetry(page: number) {
+  for (let attempt = 0; attempt <= 3; attempt += 1) {
+    try {
+      await requestHistory(page)
+      return
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : 0
+      if ((status !== 502 && status !== 503) || attempt === 3) throw error
+      const retryAfter = axios.isAxiosError(error) ? Number(error.response?.data?.retryAfter || 0) : 0
+      const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
+      show(`History 조회 실패. ${delay}초 후 다시 시도합니다. (${attempt + 1}/3)`, 'warning', 'history')
+      await wait(delay * 1000)
+    }
+  }
+}
+
 async function load() {
   action.value = 'initial'
   clear()
@@ -73,7 +89,8 @@ async function load() {
     fail(error, 'load')
   }
   try {
-    await requestHistory(0)
+    await requestHistoryWithRetry(0)
+    clear('history')
   } catch (error) {
     fail(error, 'history')
   } finally {
@@ -86,7 +103,7 @@ async function refreshHistory() {
   action.value = 'refresh'
   clear('history')
   try {
-    await requestHistory(0)
+    await requestHistoryWithRetry(0)
     show('History를 새로고침했습니다.', 'success', 'history')
   } catch (error) {
     fail(error, 'history')
@@ -136,7 +153,6 @@ async function run() {
     if (stopped) return
     show(result?.status === 'pending' ? '아직 처리 중입니다. 잠시 후 다시 확인해 주세요.' : 'Background Check가 완료되었습니다.',
       result?.status === 'pending' ? 'info' : 'success', 'check')
-    await requestHistory(0)
   } catch (error) {
     fail(error, 'check')
   } finally {
