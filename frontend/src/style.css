@@ -45,6 +45,10 @@ a { color: inherit; }
   background: var(--canvas);
 }
 
+.employee-header { border-bottom-color: #a7d7bd; background: #eaf6ef; }
+.employee-header .brand-mark p { color: #166534; }
+.employee-header .brand-mark h1, .employee-header .user-name { color: #3f6f52; }
+
 .site-header-inner {
   width: min(100% - 40px, 1100px);
   min-height: 64px;

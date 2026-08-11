@@ -20,7 +20,7 @@ async function logout() {
 
 <template>
   <div class="app-shell">
-    <header v-if="auth.user.value" class="site-header">
+    <header v-if="auth.user.value" class="site-header" :class="{ 'employee-header': !auth.isAdmin.value }">
       <div class="site-header-inner">
         <div class="brand-mark">
           <p>[ BIT::COMPUTER ]</p>
