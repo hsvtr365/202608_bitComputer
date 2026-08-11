@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${import.meta.env.BASE_URL}api`,
   withCredentials: true,
 })
 
