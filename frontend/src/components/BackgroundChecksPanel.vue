@@ -119,18 +119,25 @@ function goToHistoryPage(page: number) {
 }
 
 async function pollDetail(checkId: string) {
-  for (let attempt = 0; attempt <= 15 && !stopped; attempt += 1) {
+  let failures = 0
+  for (let poll = 0; poll <= 15 && !stopped;) {
     try {
       const result = (await api.get<BackgroundCheckResult>(`/admin/background-checks/${checkId}`)).data
       selected.value = result
-      if (result.status !== 'pending' || attempt === 15) return result
+      failures = 0
+      if (result.status !== 'pending' || poll === 15) return result
       show('결과 처리 중입니다. 자동으로 다시 확인합니다.', 'info', 'check')
       await wait(4000)
+      poll += 1
     } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status ?? 0 : 0
       const retryAfter = axios.isAxiosError(error) ? Number(error.response?.data?.retryAfter || 0) : 0
-      if (retryAfter <= 0 || attempt === 15) throw error
-      show(`외부 서비스 응답 대기 중입니다. ${retryAfter}초 후 다시 확인합니다.`, 'warning', 'check')
-      await wait(retryAfter * 1000)
+      const retryable = status === 0 || status === 502 || status === 503 || status === 504
+      if (!retryable || failures === 5) throw error
+      failures += 1
+      const delay = retryAfter > 0 ? Math.min(retryAfter, 300) : 3
+      show(`외부 서비스 응답 대기 중입니다. ${delay}초 후 다시 확인합니다. (${failures}/5)`, 'warning', 'check')
+      await wait(delay * 1000)
     }
   }
   return selected.value
@@ -149,10 +156,15 @@ async function run() {
     show(created.status === 'pending' ? '요청 접수 완료. 결과 처리 중입니다.' : 'Background Check가 완료되었습니다.',
       created.status === 'pending' ? 'info' : 'success', 'check')
 
-    const result = await pollDetail(created.checkId)
-    if (stopped) return
-    show(result?.status === 'pending' ? '아직 처리 중입니다. 잠시 후 다시 확인해 주세요.' : 'Background Check가 완료되었습니다.',
-      result?.status === 'pending' ? 'info' : 'success', 'check')
+    try {
+      const result = await pollDetail(created.checkId)
+      if (stopped) return
+      show(result?.status === 'pending' ? '아직 처리 중입니다. 잠시 후 다시 확인해 주세요.' : 'Background Check가 완료되었습니다.',
+        result?.status === 'pending' ? 'info' : 'success', 'check')
+    } catch {
+      show('조회 요청은 접수되었습니다. 상세 결과 확인이 지연되고 있습니다. 잠시 후 History에서 다시 확인해 주세요.',
+        'warning', 'check')
+    }
   } catch (error) {
     fail(error, 'check')
   } finally {
